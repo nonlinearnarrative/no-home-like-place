@@ -82,12 +82,7 @@
       <canvas class="place"></canvas>
     
       <div class="navigation">
-        <div class="source box">
-          <a href="http://airbnb.com/room/83932847" target="_blank">
-            http://airbnb.com/room/83932847
-          </a>
-        </div>
-    
+        <div class="source box">Loading…</div>
         <div class="toggle box" id="toggle">?</div>
       </div>
     </div>
@@ -114,7 +109,6 @@
     
     
       </p>
-    
       <p>
         Created by
         <br>
@@ -144,167 +138,227 @@
         <a href="https://www.paypal.me/nonlinearnarrative" target="blank">Buy us a cup of coffee</a>
       </p>
     </div>
-    
     <script>
-      const toggle = document.getElementById('toggle');
-      const about = document.getElementById('about');
+      (() => {
+        const randomIndex = total => Math.floor(Math.random() * total);
+        const pick = array => array[randomIndex(array.length)];
+        const delay = time => new Promise((resolve) => setTimeout(resolve, time));
 
-      let active = false;
+        const getJson = async url => {
+          const res = await fetch(`${url}.json`);
+          const data = await res.json();
+          return data;
+        }
 
-      toggle.onclick = () => {
-        about.classList[active ? 'remove' : 'add']('active');
-        toggle.innerHTML = active ? '?' : '&times;'
-        active = !active;
-      };
-
-      const canvas = document.querySelector('canvas');
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-
-      let currentPhoto;
-
-      const context = canvas.getContext('2d');
-      const drawBackground = (image) => {
-        context.drawImage(
-          image,
-          0,
-          0,
-          canvas.width,
-          canvas.height
+        const preloadImage = src => new Promise(
+          accept => {
+            const image = new Image();
+            image.src = src;
+            image.onload = () => accept(image);
+          }
         );
-      }
 
-      const markDirty = () => {
-        needsRedraw = true;
-      }
+        const markDirty = () => {
+          needsRedraw = true;
+        }
 
-      let needsRedraw = false;
-      const drawLoop = () => {
-        if (needsRedraw) {
-          redraw();
-          needsRedraw = false;
+        let needsRedraw = false;
+        const drawLoop = () => {
+          if (needsRedraw) {
+            draw();
+            needsRedraw = false;
+          }
+          window.requestAnimationFrame(drawLoop);
         }
         window.requestAnimationFrame(drawLoop);
-      }
-      window.requestAnimationFrame(drawLoop);
 
-      const shiftCoordinates = ([x, y, width, height]) => (
-        [x - width / 2, y - height / 2, width, height]
-      );
+        const state = {};
 
-      const drawCroppedImage = (image, srcCoordinates, dstCoordinates) => {
-        context.save();
-        const { width, height } = canvas;
-        context.drawImage(
-          image,
-          srcCoordinates[0] * image.width,
-          srcCoordinates[1] * image.height,
-          srcCoordinates[2] * image.width,
-          srcCoordinates[3] * image.height,
-          dstCoordinates[0] * width,
-          dstCoordinates[1] * height,
-          dstCoordinates[2] * width,
-          dstCoordinates[3] * height,
-        );
-        context.restore();
-      }
+        const aboutEl = document.getElementById('about');
+        const sourceEl = document.querySelector('.source');
+        const canvasEl = document.querySelector('canvas');
+        const toggleEl = document.getElementById('toggle');
+        const context = canvasEl.getContext('2d');
+        canvasEl.width = window.innerWidth * devicePixelRatio;
+        canvasEl.height = window.innerHeight * devicePixelRatio;
 
-      const preloadImage = src => {
-        return new Promise((accept) => {
-          const image = new Image();
-          image.src = src;
-          image.onload = () => {
-            accept(image);
-          }
+        const onResize = () => {
+          const { clientWidth, clientHeight } = canvasEl;
+          const { devicePixelRatio } = window;
+          canvasEl.width = state.width = clientWidth * devicePixelRatio;
+          canvasEl.height = state.height = clientHeight * devicePixelRatio;
+          markDirty();
+        };
+        window.addEventListener('resize', onResize);
+        onResize();
+
+        toggleEl.addEventListener('click', () => {
+          const active = aboutEl.classList.contains('active');
+          aboutEl.classList[active ? 'remove' : 'add']('active');
+          toggleEl.innerHTML = active ? '?' : '&times;';
+          // 300ms as defined in css transition:
+          setTimeout(onResize, 300);
         });
-      }
 
-      const randomIndex = total => Math.floor(Math.random() * total);
-      const pick = array => array[randomIndex(array.length)];
-      const delay = time => new Promise((resolve) => setTimeout(resolve, time));
+        const setSource = html => {
+          sourceEl.innerHTML = html;
+        };
 
-      const getJson = async url => {
-        const res = await fetch(`${url}.json`);
-        const data = await res.json();
-        return data;
-      }
+        const getPhotoIdsForTag = (() => {
+          const idsByTag = {};
+          const promisesByTag = {};
+          return async ({ name }) => {
+            if (!promisesByTag[name]) {
+              const promise = promisesByTag[name] = getJson(`/tags/${name}`);
+              promise.then(data => {
+                idsByTag[name] = data;
+              });
+              return promise;
+            }
+            await promisesByTag[name];
+            return idsByTag[name];
+          }
+        })();
 
-      const selectPhotoForTag = async (tag) => {
-        let photos = await getJson(`tags/${tag.name}`);
-        const filterId = startingId.split('-')[0]
-        photos = photos.filter(id => id.indexOf(filterId === -1));
-        const photoId = pick(photos);
-        tag.photo = await getJson(`photos/${photoId}`);
-      }
-
-      const drawTag = async (tag) => {
-        if (!tag.image) return;
-        
-        drawCroppedImage(
-          tag.image,
-          shiftCoordinates(tag.photo.pickedTag.coordinates),
-          tag.coordinates
+        const shiftCoordinates = ([x, y, width, height]) => (
+          [x - width / 2, y - height / 2, width, height]
         );
-      };
 
-      const redraw = () => {
-        if (currentPhoto.background) {
-          drawBackground(currentPhoto.background);
+        const drawCroppedImage = (image, srcCoordinates, dstCoordinates) => {
+          const { width, height } = state;
+          context.drawImage(
+            image,
+            srcCoordinates[0] * image.width,
+            srcCoordinates[1] * image.height,
+            srcCoordinates[2] * image.width,
+            srcCoordinates[3] * image.height,
+            dstCoordinates[0] * width,
+            dstCoordinates[1] * height,
+            dstCoordinates[2] * width,
+            dstCoordinates[3] * height,
+          );
         }
-        currentPhoto.tags.forEach(drawTag);
-      }
 
-      const initialize = async (photoId) => {
-        window.location.hash = photoId;
-        currentPhoto = await getJson(`photos/${photoId}`);
-        const image = await preloadImage(currentPhoto.src);
-        currentPhoto.background = image;
-        markDirty();
-        await delay(1000);
-        currentPhoto.tags.forEach(async tag => {
-          tag.coordinates = shiftCoordinates(tag.coordinates, image);
-          await selectPhotoForTag(tag);
+        const drawTag = async (tag) => {
+          if (!tag.image) return;
+          
+          drawCroppedImage(
+            tag.image,
+            shiftCoordinates(tag.photo.pickedTag.coordinates),
+            tag.coordinates
+          );
+
+          if (state.selectedTag === tag) {
+            const [x, y, width, height] = state.selectedTag.coordinates;
+            const image = state.photo.imageEl;
+            context.strokeStyle = 'black';
+            context.lineWidth = 3;
+            context.strokeRect(
+              Math.floor(x * state.width) + 0.5,
+              Math.floor(y * state.height) + 0.5,
+              Math.ceil(width * state.width) + 0.5,
+              Math.ceil(height * state.height) + 0.5
+            );
+          }
+        };
+
+        const draw = () => {
+          if (!state.photo) return;
+          if (state.photo.imageEl) {
+            context.drawImage(
+              state.photo.imageEl,
+              0,
+              0,
+              state.width,
+              state.height
+            );
+          }
+          state.photo.tags.forEach(drawTag);
+        }
+
+        const replaceTag = async tag => {
+          tag.coordinates = shiftCoordinates(
+            tag.coordinates,
+            state.photo.imageEl
+          );
+          let photos = await getPhotoIdsForTag(tag);
+          const filterId = state.photo.photoId.split('-')[0];
+          photos = photos.filter(
+            id => id.indexOf(filterId === -1)
+          );
+          const photoId = pick(photos);
+          tag.photo = await getJson(`/photos/${photoId}`);
           const tagImage = await preloadImage(tag.photo.src);
           tag.image = tagImage;
-          const optionTags = tag.photo.tags.filter(optionTag => optionTag.name === tag.name);
+          const optionTags = tag.photo.tags.filter(
+            optionTag => optionTag.name === tag.name
+          );
           const optionTag = pick(optionTags);
           tag.photo.pickedTag = optionTag;
           markDirty();
-        });
-      }
+        };
 
-      const intersects = (x, y, [cx, cy, cw, ch]) => (
-          x > cx &&
-          y > cy &&
-          x < cx + cw &&
-          y < cy + ch
-      );
+        const initialize = async (photoId) => {
+          setSource('Loading…');
+          if (state.photo) {
+            window.location.hash = photoId;
+          }
+          state.photo = await getJson(`/photos/${photoId}`);
+          const image = await preloadImage(state.photo.src);
+          state.photo.imageEl = image;
+          markDirty();
+          await delay(1000);
+          setSource('Replacing…');
+          const tagsP = state.photo.tags.map(replaceTag);
+          Promise.all(tagsP)
+            .then(() => {
+              const url = `http://airbnb.com/room/${state.photo.photoId}`;
+              setSource(`<a href="${url}" target="_blank">${url}</a>`);
+            });
+        }
 
-      const findClickedCrop = (x, y) => currentPhoto.tags.find(
-        tag => intersects(x, y, tag.coordinates)
-      );
-
-      const onClick = ({ clientX, clientY }) => {
-        const crop = findClickedCrop(
-          clientX / canvas.width,
-          clientY / canvas.height
+        const intersects = (x, y, [cx, cy, cw, ch]) => (
+            x > cx &&
+            y > cy &&
+            x < cx + cw &&
+            y < cy + ch
         );
-        console.log(crop.name);
-        if (!crop) return;
-        initialize(crop.photo.photoId);
-      }
 
-      canvas.addEventListener('click', onClick);
-      window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        markDirty();
-      });
+        const findCrop = (x, y) => [].concat(state.photo.tags)
+          .reverse()
+          .find(
+            tag => !!tag.image && intersects(x, y, tag.coordinates)
+          );
 
-      const startingId = window.location.hash
-        ? window.location.hash.replace('#', '')
-        : `${randomIndex(1419)}-0`;
-      initialize(startingId);
+        canvasEl.addEventListener('click', ({ clientX, clientY }) => {
+          const crop = findCrop(
+            (clientX * devicePixelRatio) / state.width,
+            (clientY * devicePixelRatio) / state.height
+          );
+          if (!crop) return;
+          window.location.hash = crop.photo.photoId;
+        });
+
+        canvasEl.addEventListener('mousemove', ({ clientX, clientY }) => {
+          const selectedTag = findCrop(
+            (clientX * devicePixelRatio) / state.width,
+            (clientY * devicePixelRatio) / state.height
+          );
+          if (selectedTag !== state.selectedTag) {
+            state.selectedTag = selectedTag;
+            markDirty();
+          }
+        });
+
+        const start = () => {
+          const startingId = window.location.hash
+            ? window.location.hash.replace('#', '')
+            : `${randomIndex(1419)}-0`;
+          initialize(startingId);
+        };
+        window.onhashchange = start;
+        start();
+      })();
     </script>
   </body>
 </html>
