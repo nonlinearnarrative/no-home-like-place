@@ -254,10 +254,10 @@
             context.strokeStyle = 'black';
             context.lineWidth = 3;
             context.strokeRect(
-              Math.floor(x * state.width) + 0.5,
-              Math.floor(y * state.height) + 0.5,
-              Math.ceil(width * state.width) + 0.5,
-              Math.ceil(height * state.height) + 0.5
+              x * state.width,
+              y * state.height,
+              width * state.width,
+              height * state.height
             );
           }
         };
