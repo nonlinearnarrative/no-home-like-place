@@ -324,11 +324,13 @@
             y < cy + ch
         );
 
-        const findCrop = (x, y) => [].concat(state.photo.tags)
-          .reverse()
-          .find(
-            tag => !!tag.image && intersects(x, y, tag.coordinates)
-          );
+        const findCrop = (x, y) => state.photo ?
+          [].concat(state.photo.tags)
+            .reverse()
+            .find(
+              tag => !!tag.image && intersects(x, y, tag.coordinates)
+            )
+          : null;
 
         canvasEl.addEventListener('click', ({ clientX, clientY }) => {
           const crop = findCrop(
