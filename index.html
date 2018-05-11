@@ -4,31 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>No Home Like Place</title>
     <style>
         * {
             box-sizing: border-box;
         }
-
         html,
         body {
             width: 100%;
             height: 100%;
             margin: 0;
+            padding: 0;
         }
-        canvas {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
+        body {
+            position: fixed;
+            font-family: Helvetica, Arial, sans-serif;
+            display: flex;
+            font-size: 14px;
+            overflow: hidden;            
+        }
+        a {
+            color: #000;
+        }
+        .interface {
+            height: 100%;
+            position: relative;
+        }
+        .place {
+            width: 100%;
+            height: 100%;
+        }
+        .navigation {
+            position: absolute;
+            right: 1em;
+            bottom: 1em;
+            white-space: nowrap;
+        }
+        .box {
+            background: #fff;
+            border: 1px solid #000;
+            padding: 0.75em 1em;
+            display: inline-block;
+            white-space: normal;
+        }
+        .toggle {
+            font-weight: bold;
+            margin-left: 0.7em;
+            cursor: pointer;
+        }
+        .about {
+            background: #fff;
+            border-left: 1px solid #000;
+            flex-shrink: 0;
+            width: 0;
+            padding: 0;
+            height: 100%;
+            transition: 0.3s ease-in-out all;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+        }
+        .about.active {
+            width: 23em;
+            padding: 2em;
+            padding-left: 1.5em;
+            padding-top: 2em;
+        }
+
+        @media (max-width: 600px) {
+            .about.active {
+                width: 18.2em;
+            }
         }
     </style>
   </head>
   <body>
-    <canvas></canvas>
-
+    <div class="interface">
+      <canvas class="place"></canvas>
+    
+      <div class="navigation">
+        <div class="source box">
+          <a href="http://airbnb.com/room/83932847" target="_blank">
+            http://airbnb.com/room/83932847
+          </a>
+        </div>
+    
+        <div class="toggle box" id="toggle">?</div>
+      </div>
+    </div>
+    
+    <div class="about" id="about">
+      <p>
+        No Home Like Place
+      </p>
+    
+      <p>
+        Airbnb is a global hotel filled with the same recurring items. Bed, chair, potted plant, all catered to our cosmopolitan
+        sensibilities. We end up in a place that's completely interchangable; a room is a room is a room.
+      </p>
+    
+      <p>
+        An algorithm finds these recurring items and replaces them with the same items from other listings. By clicking them, you
+        can jump between rooms and explore the global hotel. There are many homelike places.
+      </p>
+    
+      <p>
+        You can find the source code for the various tools we created and used to make this website on
+        <a href="https://github.com/nonlinearnarrative/no-home-like-place"
+          target="blank">Github</a>.
+    
+    
+      </p>
+    
+      <p>
+        Created by
+        <br>
+        <br>
+        <a href="https://puckey.studio/" target="blank">Jonathan Puckey</a>
+        <br>
+        <a href="https://twitter.com/bnjmn_earl" target="blank">Benjamin Earl</a>
+        <br>
+        <a href="https://twitter.com/neufv_txt" target="blank">David van Gelder de Neufville</a>
+        <br>
+        <a href="http://www.emmaverhoeven.nl/" target="blank">Emma Verhoeven</a>
+        <br>
+        <a href="http://linseydolleman.com//" target="blank">Linsey Dolleman</a>
+        <br> Corinna Canali
+        <br>
+        <a href="http://www.astridferinga.com//" target="blank">Astrid Feringa</a>
+      </p>
+    
+      <p>
+        as outcome of a week-long workshop led by
+        <a href="https://puckey.studio/" target="blank">Jonathan Puckey</a> at
+        <a href="https://www.kabk.nl/en/programmes/master/non-linear-narrative" target="blank">Non-Linear Narrative</a>, a masters programme at the Royal Academy of Art The Hague.
+      </p>
+      <br>
+      <p>
+        <a href="https://www.paypal.me/nonlinearnarrative" target="blank">Buy us a cup of coffee</a>
+      </p>
+    </div>
+    
     <script>
+      const toggle = document.getElementById('toggle');
+      const about = document.getElementById('about');
+
+      let active = false;
+
+      toggle.onclick = () => {
+        about.classList[active ? 'remove' : 'add']('active');
+        toggle.innerHTML = active ? '?' : '&times;'
+        active = !active;
+      };
+
       const canvas = document.querySelector('canvas');
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
