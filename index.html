@@ -309,11 +309,9 @@
           await delay(1000);
           setSource('Replacing…');
           const tagsP = state.photo.tags.map(replaceTag);
-          Promise.all(tagsP)
-            .then(() => {
-              const url = `http://airbnb.com/room/${state.photo.photoId}`;
-              setSource(`<a href="${url}" target="_blank">${url}</a>`);
-            });
+          await Promise.all(tagsP);
+          const url = `http://airbnb.com/room/${state.photo.photoId}`;
+          setSource(`<a href="${url}" target="_blank">${url}</a>`);
         }
 
         const intersects = (x, y, [cx, cy, cw, ch]) => (
