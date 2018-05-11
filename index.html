@@ -209,7 +209,7 @@
           const promisesByTag = {};
           return async ({ name }) => {
             if (!promisesByTag[name]) {
-              const promise = promisesByTag[name] = getJson(`/tags/${name}`);
+              const promise = promisesByTag[name] = getJson(`tags/${name}`);
               promise.then(data => {
                 idsByTag[name] = data;
               });
@@ -287,7 +287,7 @@
             id => id.indexOf(filterId === -1)
           );
           const photoId = pick(photos);
-          tag.photo = await getJson(`/photos/${photoId}`);
+          tag.photo = await getJson(`photos/${photoId}`);
           const tagImage = await preloadImage(tag.photo.src);
           tag.image = tagImage;
           const optionTags = tag.photo.tags.filter(
@@ -303,7 +303,7 @@
           if (state.photo) {
             window.location.hash = photoId;
           }
-          state.photo = await getJson(`/photos/${photoId}`);
+          state.photo = await getJson(`photos/${photoId}`);
           const image = await preloadImage(state.photo.src);
           state.photo.imageEl = image;
           markDirty();
