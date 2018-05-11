@@ -310,7 +310,7 @@
           setSource('Replacing…');
           const tagsP = state.photo.tags.map(replaceTag);
           await Promise.all(tagsP);
-          const url = `http://airbnb.com/room/${state.photo.photoId}`;
+          const url = `http://airbnb.com/room/${state.photo.listingId}`;
           setSource(`<a href="${url}" target="_blank">${url}</a>`);
         }
 
