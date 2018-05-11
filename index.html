@@ -230,7 +230,7 @@
       }
 
       const selectPhotoForTag = async (tag) => {
-        let photos = await getJson(`/tags/${tag.name}`);
+        let photos = await getJson(`tags/${tag.name}`);
         const filterId = startingId.split('-')[0]
         photos = photos.filter(id => id.indexOf(filterId === -1));
         const photoId = pick(photos);
