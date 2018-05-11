@@ -121,11 +121,11 @@
         <br>
         <a href="https://puckey.studio/" target="blank">Jonathan Puckey</a>
         <br>
+        <a href="http://www.emmaverhoeven.nl/" target="blank">Emma Verhoeven</a>
+        <br>
         <a href="https://twitter.com/bnjmn_earl" target="blank">Benjamin Earl</a>
         <br>
         <a href="https://twitter.com/neufv_txt" target="blank">David van Gelder de Neufville</a>
-        <br>
-        <a href="http://www.emmaverhoeven.nl/" target="blank">Emma Verhoeven</a>
         <br>
         <a href="http://linseydolleman.com//" target="blank">Linsey Dolleman</a>
         <br>
@@ -234,7 +234,7 @@
         const filterId = startingId.split('-')[0]
         photos = photos.filter(id => id.indexOf(filterId === -1));
         const photoId = pick(photos);
-        tag.photo = await getJson(`/photos/${photoId}`);
+        tag.photo = await getJson(`photos/${photoId}`);
       }
 
       const drawTag = async (tag) => {
@@ -256,7 +256,7 @@
 
       const initialize = async (photoId) => {
         window.location.hash = photoId;
-        currentPhoto = await getJson(`/photos/${photoId}`);
+        currentPhoto = await getJson(`photos/${photoId}`);
         const image = await preloadImage(currentPhoto.src);
         currentPhoto.background = image;
         markDirty();
