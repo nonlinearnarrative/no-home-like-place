@@ -127,6 +127,7 @@
       }
 
       const initialize = async (photoId) => {
+        window.location.hash = photoId;
         currentPhoto = await getJson(`/photos/${photoId}`);
         const image = await preloadImage(currentPhoto.src);
         currentPhoto.background = image;
@@ -172,9 +173,9 @@
         markDirty();
       });
 
-      const total = 1419;
-      const listingId = randomIndex(total);
-      const startingId = `${listingId}-0`;
+      const startingId = window.location.hash
+        ? window.location.hash.replace('#', '')
+        : `${randomIndex(1419)}-0`;
       initialize(startingId);
     </script>
   </body>
