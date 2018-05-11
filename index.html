@@ -83,8 +83,8 @@
     
       <div class="navigation">
         <div class="source box">
-          <a href="http://airbnb.com/room/83932847" target="_blank">
-            http://airbnb.com/room/83932847
+          <a href="" target="_blank" id="source_url">
+            http://
           </a>
         </div>
     
@@ -148,6 +148,8 @@
     <script>
       const toggle = document.getElementById('toggle');
       const about = document.getElementById('about');
+      const sourceUrl = document.getElementById('source_url');
+      const sourcePrefix  = 'https://airbnb.com/rooms/';
 
       let active = false;
 
@@ -257,6 +259,7 @@
       const initialize = async (photoId) => {
         window.location.hash = photoId;
         currentPhoto = await getJson(`photos/${photoId}`);
+        sourceUrl.innerHTML = sourceUrl.href = sourcePrefix + currentPhoto.listingId
         const image = await preloadImage(currentPhoto.src);
         currentPhoto.background = image;
         markDirty();
