@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+        canvas {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        }
+    </style>
+  </head>
+  <body>
+    <canvas></canvas>
+
+    <script>
+      const canvas = document.querySelector('canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      let currentPhoto;
+
+      const context = canvas.getContext('2d');
+      const drawBackground = (image) => {
+        context.drawImage(
+          image,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+      }
+
+      const markDirty = () => {
+        needsRedraw = true;
+      }
+
+      let needsRedraw = false;
+      const drawLoop = () => {
+        if (needsRedraw) {
+          redraw();
+          needsRedraw = false;
+        }
+        window.requestAnimationFrame(drawLoop);
+      }
+      window.requestAnimationFrame(drawLoop);
+
+      const shiftCoordinates = ([x, y, width, height]) => (
+        [x - width / 2, y - height / 2, width, height]
+      );
+
+      const drawCroppedImage = (image, srcCoordinates, dstCoordinates) => {
+        context.save();
+        const { width, height } = canvas;
+        context.drawImage(
+          image,
+          srcCoordinates[0] * image.width,
+          srcCoordinates[1] * image.height,
+          srcCoordinates[2] * image.width,
+          srcCoordinates[3] * image.height,
+          dstCoordinates[0] * width,
+          dstCoordinates[1] * height,
+          dstCoordinates[2] * width,
+          dstCoordinates[3] * height,
+        );
+        context.restore();
+      }
+
+      const preloadImage = src => {
+        return new Promise((accept) => {
+          const image = new Image();
+          image.src = src;
+          image.onload = () => {
+            accept(image);
+          }
+        });
+      }
+
+      const randomIndex = total => Math.floor(Math.random() * total);
+      const pick = array => array[randomIndex(array.length)];
+      const delay = time => new Promise((resolve) => setTimeout(resolve, time));
+
+      const getJson = async url => {
+        const res = await fetch(`${url}.json`);
+        const data = await res.json();
+        return data;
+      }
+
+      const selectPhotoForTag = async (tag) => {
+        let photos = await getJson(`/tags/${tag.name}`);
+        const filterId = startingId.split('-')[0]
+        photos = photos.filter(id => id.indexOf(filterId === -1));
+        const photoId = pick(photos);
+        tag.photo = await getJson(`/photos/${photoId}`);
+      }
+
+      const drawTag = async (tag) => {
+        if (!tag.image) return;
+        
+        drawCroppedImage(
+          tag.image,
+          shiftCoordinates(tag.photo.pickedTag.coordinates),
+          tag.coordinates
+        );
+      };
+
+      const redraw = () => {
+        if (currentPhoto.background) {
+          drawBackground(currentPhoto.background);
+        }
+        currentPhoto.tags.forEach(drawTag);
+      }
+
+      const initialize = async (photoId) => {
+        currentPhoto = await getJson(`/photos/${photoId}`);
+        const image = await preloadImage(currentPhoto.src);
+        currentPhoto.background = image;
+        markDirty();
+        await delay(1000);
+        currentPhoto.tags.forEach(async tag => {
+          tag.coordinates = shiftCoordinates(tag.coordinates, image);
+          await selectPhotoForTag(tag);
+          const tagImage = await preloadImage(tag.photo.src);
+          tag.image = tagImage;
+          const optionTags = tag.photo.tags.filter(optionTag => optionTag.name === tag.name);
+          const optionTag = pick(optionTags);
+          tag.photo.pickedTag = optionTag;
+          markDirty();
+        });
+      }
+
+      const intersects = (x, y, [cx, cy, cw, ch]) => (
+          x > cx &&
+          y > cy &&
+          x < cx + cw &&
+          y < cy + ch
+      );
+
+      const findClickedCrop = (x, y) => currentPhoto.tags.find(
+        tag => intersects(x, y, tag.coordinates)
+      );
+
+      const onClick = ({ clientX, clientY }) => {
+        const crop = findClickedCrop(
+          clientX / canvas.width,
+          clientY / canvas.height
+        );
+        console.log(crop.name);
+        if (!crop) return;
+        initialize(crop.photo.photoId);
+      }
+
+      canvas.addEventListener('click', onClick);
+      window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        markDirty();
+      });
+
+      const total = 1419;
+      const listingId = randomIndex(total);
+      const startingId = `${listingId}-0`;
+      initialize(startingId);
+    </script>
+  </body>
+</html>

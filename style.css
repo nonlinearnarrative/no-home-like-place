@@ -1,0 +1,39 @@
+Export Data:
+- export all listing photos as json files:
+  - at /listing/${listing-index}-${photo-index}.json where index is a number
+    starting at 0 for the lowest AirBnB id
+  - containing:
+    {
+      id: listing.id,
+      url: the url of the photo to load,
+      tags: the array of tags found in the photo
+    }
+- collect all tags in all photos by tag name:
+  - export to /tags/tagname.json
+  - containing:
+    [
+      listingId,
+      listingId,
+      listingId
+    ]
+
+Front end code:
+- A canvas element stretched to full screen using css
+- A resize event listener to set width / height
+
+When page loads:
+- Get listing index from url, or pick a random one if it is missing
+- Load the listing photo json
+  - Load the photo url. When it is ready loading draw it in the background.
+- Pick a random listingId for each tag found in the photo
+  - Load the listing photo json for each of these
+  - Preload found photos
+  - Crop these photos in the canvas as defined by the area in the tag
+    information
+      - (The drawing order could be ordered by size of rectangle from small to large)
+
+When the user clicks on the canvas:
+  - Get the click position
+  - Find the first tag rectangle that intersects with the clicked position
+    - If a tag was found, redirect to the random listingId we drew in this rectangle
+      otherwise do nothing
