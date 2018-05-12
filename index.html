@@ -141,8 +141,15 @@
       (() => {
         const randomIndex = total => Math.floor(Math.random() * total);
         const pick = array => array[randomIndex(array.length)];
-        const delay = time => new Promise((resolve) => setTimeout(resolve, time));
-
+        const delay = time => new Promise(
+          resolve => setTimeout(resolve, time)
+        );
+        const intersects = (x, y, [cx, cy, cw, ch]) => (
+            x > cx &&
+            y > cy &&
+            x < cx + cw &&
+            y < cy + ch
+        );
         const getJson = async url => {
           const res = await fetch(`${url}.json`);
           const data = await res.json();
@@ -157,22 +164,23 @@
           }
         );
 
-        const markDirty = () => {
-          needsRedraw = true;
-        }
-
-        let needsRedraw = false;
-        const drawLoop = () => {
-          if (needsRedraw) {
-            draw();
-            needsRedraw = false;
+        const requestRedraw = (() => {
+          let redraw = false;
+          const drawLoop = () => {
+            if (redraw) {
+              draw();
+              redraw = false;
+            }
+            window.requestAnimationFrame(drawLoop);
           }
           window.requestAnimationFrame(drawLoop);
-        }
-        window.requestAnimationFrame(drawLoop);
+
+          return () => {
+            redraw = true;
+          }
+        })();
 
         const state = {};
-
         const aboutEl = document.getElementById('about');
         const sourceEl = document.querySelector('.source');
         const canvasEl = document.querySelector('canvas');
@@ -186,7 +194,7 @@
           const { devicePixelRatio } = window;
           canvasEl.width = state.width = clientWidth * devicePixelRatio;
           canvasEl.height = state.height = clientHeight * devicePixelRatio;
-          markDirty();
+          requestRedraw();
         };
         window.addEventListener('resize', onResize);
         onResize();
@@ -199,8 +207,19 @@
           setTimeout(onResize, 300);
         });
 
-        const setSource = html => {
-          sourceEl.innerHTML = html;
+        const setSource = (() => {
+          let previousValue = null;
+          return html => {
+            if (previousValue === html) return;
+            sourceEl.innerHTML = previousValue = html;
+          };
+        })();
+
+        const updateURL = () => {
+          const url = `https://airbnb.com/room/${
+              (state.selectedTag || state).photo.listingId
+            }`;
+            setSource(`<a href="${url}" target="_blank">${url}</a>`);
         };
 
         const getPhotoIdsForTag = (() => {
@@ -219,8 +238,21 @@
           }
         })();
 
+        const findCrop = (x, y) => state.photo ?
+          [].concat(state.photo.tags)
+            .reverse()
+            .find(
+              tag => !!tag.image && intersects(x, y, tag.coordinates)
+            )
+          : null;
+
         const shiftCoordinates = ([x, y, width, height]) => (
-          [x - width / 2, y - height / 2, width, height]
+          [
+            x - width / 2,
+            y - height / 2,
+            width,
+            height
+          ]
         );
 
         const drawCroppedImage = (image, srcCoordinates, dstCoordinates) => {
@@ -240,13 +272,14 @@
 
         const drawTag = async (tag) => {
           if (!tag.image) return;
-          
+
           drawCroppedImage(
             tag.image,
             shiftCoordinates(tag.photo.pickedTag.coordinates),
             tag.coordinates
           );
 
+          // Draw black rectangle around tag, if it is selected:
           if (state.selectedTag === tag) {
             const [x, y, width, height] = state.selectedTag.coordinates;
             const image = state.photo.imageEl;
@@ -276,87 +309,95 @@
         }
 
         const replaceTag = async tag => {
+          const { photo } = state;
+
           tag.coordinates = shiftCoordinates(
             tag.coordinates,
             state.photo.imageEl
           );
+
           let photos = await getPhotoIdsForTag(tag);
-          const filterId = state.photo.photoId.split('-')[0];
+          if (photo !== state.photo) return;
+
+          const filterId = photo.photoId.split('-')[0];
           photos = photos.filter(
             id => id.indexOf(filterId === -1)
           );
           const photoId = pick(photos);
+
           tag.photo = await getJson(`photos/${photoId}`);
+          if (photo !== state.photo) return;
+
           const tagImage = await preloadImage(tag.photo.src);
+          if (photo !== state.photo) return;
+
           tag.image = tagImage;
           const optionTags = tag.photo.tags.filter(
             optionTag => optionTag.name === tag.name
           );
           const optionTag = pick(optionTags);
           tag.photo.pickedTag = optionTag;
-          markDirty();
+          requestRedraw();
         };
 
-        const initialize = async (photoId) => {
+        canvasEl.addEventListener(
+          'click',
+          ({ clientX, clientY }) => {
+            const crop = findCrop(
+              (clientX * devicePixelRatio) / state.width,
+              (clientY * devicePixelRatio) / state.height
+            );
+            if (!crop) return;
+            window.location.hash = crop.photo.photoId;
+          }
+        );
+
+        canvasEl.addEventListener(
+          'mousemove',
+          ({ clientX, clientY }) => {
+            const selectedTag = findCrop(
+              (clientX * devicePixelRatio) / state.width,
+              (clientY * devicePixelRatio) / state.height
+            );
+            if (selectedTag !== state.selectedTag) {
+              state.selectedTag = selectedTag;
+              requestRedraw();
+            }
+            if (state.finished) {
+              updateURL();
+            }
+          }
+        );
+
+        const run = async () => {
+          const photoId = window.location.hash
+            ? window.location.hash.replace('#', '')
+            : `${randomIndex(1419)}-0`;
           setSource('Loading…');
           if (state.photo) {
             window.location.hash = photoId;
           }
-          state.photo = await getJson(`photos/${photoId}`);
+          const photo = state.photo = await getJson(`photos/${photoId}`);
+
           const image = await preloadImage(state.photo.src);
-          state.photo.imageEl = image;
-          markDirty();
+          if (photo !== state.photo) return;
+
+          photo.imageEl = image;
+          requestRedraw();
+
           await delay(1000);
+          if (photo !== state.photo) return;
+
           setSource('Replacing…');
-          const tagsP = state.photo.tags.map(replaceTag);
-          await Promise.all(tagsP);
-          const url = `http://airbnb.com/rooms/${state.photo.listingId}`;
-          setSource(`<a href="${url}" target="_blank">${url}</a>`);
-        }
 
-        const intersects = (x, y, [cx, cy, cw, ch]) => (
-            x > cx &&
-            y > cy &&
-            x < cx + cw &&
-            y < cy + ch
-        );
+          await Promise.all(state.photo.tags.map(replaceTag));
+          if (photo !== state.photo) return;
 
-        const findCrop = (x, y) => state.photo ?
-          [].concat(state.photo.tags)
-            .reverse()
-            .find(
-              tag => !!tag.image && intersects(x, y, tag.coordinates)
-            )
-          : null;
-
-        canvasEl.addEventListener('click', ({ clientX, clientY }) => {
-          const crop = findCrop(
-            (clientX * devicePixelRatio) / state.width,
-            (clientY * devicePixelRatio) / state.height
-          );
-          if (!crop) return;
-          window.location.hash = crop.photo.photoId;
-        });
-
-        canvasEl.addEventListener('mousemove', ({ clientX, clientY }) => {
-          const selectedTag = findCrop(
-            (clientX * devicePixelRatio) / state.width,
-            (clientY * devicePixelRatio) / state.height
-          );
-          if (selectedTag !== state.selectedTag) {
-            state.selectedTag = selectedTag;
-            markDirty();
-          }
-        });
-
-        const start = () => {
-          const startingId = window.location.hash
-            ? window.location.hash.replace('#', '')
-            : `${randomIndex(1419)}-0`;
-          initialize(startingId);
+          state.finished = true;
+          updateURL();
         };
-        window.onhashchange = start;
-        start();
+        window.onhashchange = run;
+        run();
       })();
     </script>
   </body>
