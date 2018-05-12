@@ -82,11 +82,11 @@
     
       <div class="navigation">
         <div class="source box">Loading…</div>
-        <div class="toggle box" id="toggle">?</div>
+        <div class="toggle box">?</div>
       </div>
     </div>
     
-    <div class="about" id="about">
+    <div class="about">
       <p>
         No Home Like Place
       </p>
@@ -180,10 +180,10 @@
         })();
 
         const state = {};
-        const aboutEl = document.getElementById('about');
+        const aboutEl = document.querySelector('.about');
         const sourceEl = document.querySelector('.source');
+        const toggleEl = document.querySelector('.toggle');
         const canvasEl = document.querySelector('canvas');
-        const toggleEl = document.getElementById('toggle');
         const context = canvasEl.getContext('2d');
         canvasEl.width = window.innerWidth * devicePixelRatio;
         canvasEl.height = window.innerHeight * devicePixelRatio;
