@@ -349,13 +349,18 @@
             (
               photos[index] &&
               photos[index].includes(filterId)
-            ) ||
-            !!state.photo.tags.find(tag => tag.repIndex === index)
+            ) || (
+              !!state.photo.tags.find(
+                tag => tag.repIndex === index ||
+                (tag.repId && photos[index].includes(tag.repId))
+              )
+            )
           ) {
             index++;
           }
           const photoId = photos[index] || pick(photos);
           tag.repIndex = index;
+          tag.repId = photoId.split('-')[0];
           tag.photo = await getJson(`photos/${photoId}`);
           if (photo !== state.photo) return;
 
