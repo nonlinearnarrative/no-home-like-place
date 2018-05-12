@@ -167,11 +167,10 @@
         const requestRedraw = (() => {
           let redraw = false;
           const drawLoop = () => {
-            if (redraw) {
-              draw();
-              redraw = false;
-            }
             window.requestAnimationFrame(drawLoop);
+            if (!redraw) return;
+            draw();
+            redraw = false;
           }
           window.requestAnimationFrame(drawLoop);
 
