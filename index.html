@@ -68,7 +68,9 @@
           padding-left: 1.5em;
           padding-top: 2em;
       }
-
+      .source {
+        text-transform: lowercase;
+      }
       @media (max-width: 600px) {
           .about.active {
               width: 18.2em;
@@ -216,7 +218,11 @@
           const url = `https://airbnb.com/room/${
               (state.selectedTag || state).photo.listingId
             }`;
-            setSource(`<a href="${url}" target="_blank">${url}</a>`);
+            setSource(`<a href="${url}" target="_blank">${
+              state.selectedTag ? `${state.selectedTag.name} in ` : ''
+            }${
+              (state.selectedTag || state).photo.name
+            }</a>`);
         };
 
         const getPhotoIdsForTag = (() => {
