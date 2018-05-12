@@ -347,6 +347,9 @@
               (clientY * devicePixelRatio) / state.height
             );
             if (!crop) return;
+
+            // Setting location.hash triggers window.onhashchange,
+            // which in turn triggers run(photoId):
             window.location.hash = crop.photo.photoId;
           }
         );
