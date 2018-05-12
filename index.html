@@ -346,10 +346,8 @@
           while (
             // While the index does not point to a photo in the same property,
             // and the photo is not already in use by another tag of the same name:
-            (
-              photos[index] &&
-              photos[index].includes(filterId)
-            ) || (
+            photos[index] && (
+              photos[index].includes(filterId) ||
               !!state.photo.tags.find(
                 tag => tag.repIndex === index ||
                 (tag.repId && photos[index].includes(tag.repId))
