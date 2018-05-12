@@ -337,7 +337,7 @@
 
           const filterId = photo.photoId.split('-')[0];
           photos = photos.filter(
-            id => id.indexOf(filterId === -1)
+            id => !id.includes(filterId)
           );
           const photoId = pick(photos);
 
