@@ -164,22 +164,35 @@
           }
         );
 
-        const requestRedraw = (() => {
-          let redraw = false;
-          const drawLoop = () => {
-            window.requestAnimationFrame(drawLoop);
-            if (!redraw) return;
-            draw();
-            redraw = false;
-          }
+        const drawLoop = () => {
           window.requestAnimationFrame(drawLoop);
-
-          return () => {
-            redraw = true;
+          if (state.redraw) {
+            state.redraw = false;
+            draw();
           }
-        })();
+          if (state.updateHover) {
+            state.updateHover = false;
+            const { hoverX, hoverY, width, height } = state;
+            const selectedTag = findCrop(
+              hoverX * devicePixelRatio / width,
+              hoverY * devicePixelRatio / height
+            );
+            if (selectedTag !== state.selectedTag) {
+              state.selectedTag = selectedTag;
+              requestRedraw();
+            }
+            if (state.finished) {
+              updateURL();
+            }
+          }
+        }
+        window.requestAnimationFrame(drawLoop);
 
-        const state = {};
+        const requestRedraw = () => {
+          state.redraw = true;
+        }
+
+        const state = { };
         const aboutEl = document.querySelector('.about');
         const sourceEl = document.querySelector('.source');
         const toggleEl = document.querySelector('.toggle');
@@ -361,17 +374,9 @@
         canvasEl.addEventListener(
           'mousemove',
           ({ clientX, clientY }) => {
-            const selectedTag = findCrop(
-              (clientX * devicePixelRatio) / state.width,
-              (clientY * devicePixelRatio) / state.height
-            );
-            if (selectedTag !== state.selectedTag) {
-              state.selectedTag = selectedTag;
-              requestRedraw();
-            }
-            if (state.finished) {
-              updateURL();
-            }
+            state.updateHover = true;
+            state.hoverX = clientX;
+            state.hoverY = clientY;
           }
         );
 
