@@ -336,11 +336,26 @@
           if (photo !== state.photo) return;
 
           const filterId = photo.photoId.split('-')[0];
-          photos = photos.filter(
-            id => !id.includes(filterId)
-          );
-          const photoId = pick(photos);
 
+          // Find the position of this tag in the photos array,
+          // since the array is ordered by ratio the shape of the
+          // next photo should be close to this one
+          // TODO: (this needs some reconsidering as it has a bunch of edge cases
+          // but it already seems to improve the quality of the replacements by a lot)
+          let index = photos.indexOf(photo.photoId) + 1;
+          while (
+            // While the index does not point to a photo in the same property,
+            // and the photo is not already in use by another tag of the same name:
+            (
+              photos[index] &&
+              photos[index].includes(filterId)
+            ) ||
+            !!state.photo.tags.find(tag => tag.repIndex === index)
+          ) {
+            index++;
+          }
+          const photoId = photos[index] || pick(photos);
+          tag.repIndex = index;
           tag.photo = await getJson(`photos/${photoId}`);
           if (photo !== state.photo) return;
 
