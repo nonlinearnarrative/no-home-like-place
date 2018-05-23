@@ -102,7 +102,7 @@
     
       <p>
         Airbnb is a global hotel filled with the same recurring items. Bed, chair, potted plant, all catered to our cosmopolitan
-        sensibilities. We end up in a place that's completely interchangable; a room is a room is a room.
+        sensibilities. We end up in a place that's completely interchangeable; a room is a room is a room.
       </p>
     
       <p>
@@ -126,17 +126,17 @@
         Participants
       </h1>
       <p>
-        <a href="http://www.emmaverhoeven.nl/" target="blank">Emma Verhoeven</a>
-        <br>
-        <a href="https://twitter.com/bnjmn_earl" target="blank">Benjamin Earl</a>
-        <br>
-        <a href="https://twitter.com/neufv_txt" target="blank">David van Gelder de Neufville</a>
+        Corinna Canali
         <br>
         <a href="http://linseydolleman.com//" target="blank">Linsey Dolleman</a>
         <br>
+        <a href="https://twitter.com/bnjmn_earl" target="blank">Benjamin Earl</a>
+        <br>
         <a href="http://www.astridferinga.com//" target="blank">Astrid Feringa</a>
         <br>
-        Corinna Canali
+        <a href="https://twitter.com/neufv_txt" target="blank">David van Gelder de Neufville</a>
+        <br>
+        <a href="http://www.emmaverhoeven.nl/" target="blank">Emma Verhoeven</a>
       </p>
       <h1>
         <a href="https://www.paypal.me/nonlinearnarrative" target="blank">Buy us a cup of coffee</a>
@@ -197,7 +197,9 @@
           state.redraw = true;
         }
 
-        const state = { };
+        const state = {
+          first: true,
+        };
         const aboutEl = document.querySelector('.about');
         const sourceEl = document.querySelector('.source');
         const toggleEl = document.querySelector('.toggle');
@@ -213,6 +215,7 @@
           canvasEl.height = state.height = clientHeight * devicePixelRatio;
           requestRedraw();
         };
+
         window.addEventListener('resize', onResize);
         onResize();
 
@@ -233,11 +236,16 @@
         })();
 
         const updateURL = () => {
+          if (state.first && !state.selectedTag) {
+            setSource('tap a replacement to travel');
+            state.first = false;
+            return;
+          }
           const url = `https://airbnb.com/rooms/${
               (state.selectedTag || state).photo.listingId
             }`;
             setSource(`<a href="${url}" target="_blank">${
-              state.selectedTag ? `${state.selectedTag.name} in ` : ''
+              state.selectedTag ? `travel to ${state.selectedTag.name} in ` : ''
             }${
               (state.selectedTag || state).photo.name
             }</a>`);
@@ -267,15 +275,6 @@
             )
           : null;
 
-        const shiftCoordinates = ([x, y, width, height]) => (
-          [
-            x - width / 2,
-            y - height / 2,
-            width,
-            height
-          ]
-        );
-
         const drawCroppedImage = (image, srcCoordinates, dstCoordinates) => {
           const { width, height } = state;
           context.drawImage(
@@ -296,7 +295,7 @@
 
           drawCroppedImage(
             tag.image,
-            shiftCoordinates(tag.photo.pickedTag.coordinates),
+            tag.photo.pickedTag.coordinates,
             tag.coordinates
           );
 
@@ -331,11 +330,6 @@
 
         const replaceTag = async tag => {
           const { photo } = state;
-
-          tag.coordinates = shiftCoordinates(
-            tag.coordinates,
-            state.photo.imageEl
-          );
 
           let photos = await getPhotoIdsForTag(tag);
           if (photo !== state.photo) return;
@@ -407,10 +401,11 @@
           const photoId = window.location.hash
             ? window.location.hash.replace('#', '')
             : `${randomIndex(1419)}-0`;
-          setSource('Loading…');
+          setSource('Arriving at your Airbnb…');
           if (state.photo) {
             window.location.hash = photoId;
           }
+          const retrievingListingDelay = delay(1000);
           const photo = state.photo = await getJson(`photos/${photoId}`);
 
           const image = await preloadImage(state.photo.src);
@@ -419,12 +414,16 @@
           photo.imageEl = image;
           requestRedraw();
 
-          await delay(1000);
+          await retrievingListingDelay;
           if (photo !== state.photo) return;
 
-          setSource('Replacing…');
+          setSource(`Replacing ${state.photo.tags.length} items…`);
 
+          // Wait for all replacements to load or a delay to allow
+          // the user to read the status – whichever takes longer:
+          const replacingPause = delay(2000);
           await Promise.all(state.photo.tags.map(replaceTag));
+          await replacingPause;
           if (photo !== state.photo) return;
 
           state.finished = true;
