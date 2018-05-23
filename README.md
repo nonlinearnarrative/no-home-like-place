@@ -10,7 +10,7 @@ Objects that are detected within the listing photo are replaced by images of the
 [`airbnb-object-recognition`](https://github.com/nonlinearnarrative/airbnb-object-recognition) – Creates a collection of JSON files with recognized objects in photos of Airbnb listings.
 
 ## About this project
-`No Home Like Place` was created as part of a workshop at [Non-Linear Narrative](https://www.kabk.nl/en/programmes/master/non-linear-narrative) at Royal Academy of Art The Hague.
+No Home Like Place was created as part of a workshop at [Non-Linear Narrative](https://www.kabk.nl/en/programmes/master/non-linear-narrative) at Royal Academy of Art The Hague.
 
 
 #### [Buy us a coffee :coffee:](https://www.paypal.me/nonlinearnarrative)
