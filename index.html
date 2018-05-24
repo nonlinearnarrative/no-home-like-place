@@ -60,7 +60,8 @@
           border: 1px solid #000;
           padding: 0.75em 1em;
           display: inline-block;
-          white-space: normal;
+          white-space: nowrap;
+          overflow: hidden;
       }
       .toggle {
           margin-left: 0.7em;
@@ -87,8 +88,6 @@
         text-transform: lowercase;
         max-width: 75vw;
         text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
       }
       @media (max-width: 600px) {
           .about.active {
