@@ -230,14 +230,13 @@
         };
 
         window.addEventListener('resize', onResize);
+        window.addEventListener('transitionend', onResize);
         onResize();
 
         toggleEl.addEventListener('click', () => {
           const active = aboutEl.classList.contains('active');
           aboutEl.classList[active ? 'remove' : 'add']('active');
           toggleEl.innerHTML = active ? '?' : '&times;';
-          // 300ms as defined in css transition:
-          setTimeout(onResize, 300);
         });
 
         const setSource = (() => {
