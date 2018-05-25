@@ -439,6 +439,7 @@
           if (photo !== state.photo) return;
 
           state.finished = true;
+          state.selectedTag = null;
           updateURL();
         };
         window.onhashchange = run;
