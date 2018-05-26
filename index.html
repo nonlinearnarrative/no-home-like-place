@@ -442,17 +442,24 @@
           state.selectedTag = null;
           updateURL();
         };
-        window.onhashchange = run;
+        window.onhashchange = () => {
+          if (window.ga) {
+            window.ga('send', 'pageview',
+              { page: location.pathname + location.hash }
+            );
+          }
+          run(); 
+        };
         run();
       })();
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-119830991-1"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'UA-119830991-1');
+      !function(k,a,n,y,e){k.GoogleAnalyticsObject=n;k[n]||(k[n]=function(){
+      (k[n].q=k[n].q||[]).push(arguments)});k[n].l=+new Date;y=a.createElement('script');
+      e=a.scripts[0];y.src='//www.google-analytics.com/analytics.js';
+      e.parentNode.insertBefore(y,e)}(window,document,'ga');
+      ga('create', 'UA-119830991-1', 'no-home-like-place.com');
+      ga('send', 'pageview');
     </script>
   </body>
 </html>
