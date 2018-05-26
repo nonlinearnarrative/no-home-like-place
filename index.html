@@ -442,14 +442,7 @@
           state.selectedTag = null;
           updateURL();
         };
-        window.onhashchange = () => {
-          if (window.ga) {
-            window.ga('send', 'pageview',
-              { page: location.pathname + location.hash }
-            );
-          }
-          run(); 
-        };
+        window.onhashchange = run;
         run();
       })();
     </script>
@@ -459,7 +452,13 @@
       e=a.scripts[0];y.src='//www.google-analytics.com/analytics.js';
       e.parentNode.insertBefore(y,e)}(window,document,'ga');
       ga('create', 'UA-119830991-1', 'no-home-like-place.com');
-      ga('send', 'pageview');
+      const track = () => {
+        ga('send', 'pageview',
+          { page: location.pathname + location.hash }
+        );
+      }
+      window.addEventListener('hashchange', track);
+      track();
     </script>
   </body>
 </html>
