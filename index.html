@@ -51,10 +51,11 @@
           height: 100%;
       }
       .navigation {
-          position: absolute;
+          position: fixed;
           right: 1em;
           bottom: 1em;
           white-space: nowrap;
+          z-index: 1000;
       }
       .box {
           background: #fff;
@@ -78,6 +79,9 @@
           transition: 0.3s ease-in-out all;
           overflow-y: scroll;
           -webkit-overflow-scrolling: touch;
+          position: fixed;
+          right: 0;
+          top: 0;
       }
       .about.active {
         width: 23em;
@@ -138,21 +142,13 @@
         Participants
       </h1>
       <p>
-        Corinna Canali
-        <br>
+        <a href="http://www.astridferinga.com" target="blank">Astrid Feringa</a><br>
+        Corinna Canali<br>
+        <a href="https://www.bnjmnearl.eu/" target="blank">Benjamin Earl</a><br>
+        <a href="https://nuel.pw" target="blank">Emmanuelle van Gelder de Neufville</a><br>
+        <a href="http://www.emmaverhoeven.nl" target="blank">Emma Verhoeven</a><br>
         <a href="http://linseydolleman.com" target="blank">Linsey Dolleman</a>
-        <br>
-        <a href="https://twitter.com/bnjmn_earl" target="blank">Benjamin Earl</a>
-        <br>
-        <a href="http://www.astridferinga.com" target="blank">Astrid Feringa</a>
-        <br>
-        <a href="https://twitter.com/neufv_txt" target="blank">David van Gelder de Neufville</a>
-        <br>
-        <a href="http://www.emmaverhoeven.nl" target="blank">Emma Verhoeven</a>
       </p>
-      <h1>
-        <a href="https://www.paypal.me/nonlinearnarrative" target="blank">Buy us a cup of coffee</a>
-      </h1>
     </div>
     <script>
       (() => {
